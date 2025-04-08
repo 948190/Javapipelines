@@ -6,10 +6,13 @@ trigger:
 pool:
   vmImage: 'ubuntu-latest'  # Use Ubuntu as the build agent
 
+variables:
+  NODE_VERSION: '16.x'  # Regular variable for Node.js version
+
 steps:
-- task: UseNode@2  # Install Node.js (modify if not using Node.js)
+- task: UseNode@2  # Install Node.js
   inputs:
-    version: '16.x'
+    version: '$(NODE_VERSION)'
 
 - script: |
     echo "Installing dependencies..."
@@ -31,6 +34,12 @@ steps:
   inputs:
     pathToPublish: '$(Build.ArtifactStagingDirectory)'
     artifactName: 'drop'
+
+- task: AzureWebApp@1
+  inputs:
+    azureSubscription: 'java-service-connection'  # Name of the service connection
+    appName: 'MyJavaApp'
+    package: '$(Build.ArtifactStagingDirectory)/java-app.jar'
 
 - script: |
     echo "Deploying application..."
