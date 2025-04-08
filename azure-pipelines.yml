@@ -8,8 +8,8 @@ pool:
 
 variables:
   buildConfiguration: 'Release'  # Specify build configuration
-  appName: 'MyJavaApp'           # Application name
-  system.debug: true             # Enable debug mode for detailed logs
+  appName: 'MyJavaApp'          # Application name
+  system.debug: true            # Enable debug mode for detailed logs
 
 steps:
 - checkout: self  # Ensure the repository is checked out
@@ -20,7 +20,7 @@ steps:
     ls -la $(System.DefaultWorkingDirectory)
   displayName: 'Debug Workspace Contents'
 
-- task: Maven@3  # Use Maven to build your Java application
+- task: Maven@3  # Build the Java application with Maven
   inputs:
     mavenPomFile: 'pom.xml'  # Ensure this points to the correct location of pom.xml
     goals: 'clean package'
@@ -36,7 +36,15 @@ steps:
 
 - task: PublishBuildArtifacts@1  # Publish the built artifact (e.g., .jar file)
   inputs:
-    pathToPublish: '$(System.DefaultWorkingDirectory)/target/*.jar'  # Path to the .jar file
+    # IMPORTANT: Adjust pathToPublish based on the output of the
+    # "Verify Target Directory After Build" step. If your .jar file is in a
+    # subdirectory within 'target', update this path accordingly.
+    # Example if the .jar is directly in 'target':
+    pathToPublish: '$(System.DefaultWorkingDirectory)/target/*.jar'
+    # Example if the .jar is in a subdirectory like 'target/dist':
+    # pathToPublish: '$(System.DefaultWorkingDirectory)/target/dist/*.jar'
+    # Example for recursively finding .jar files under 'target':
+    # pathToPublish: '$(System.DefaultWorkingDirectory)/target/**/*.jar'
     artifactName: 'java-artifact'
   timeoutInMinutes: 60  # Allocate appropriate time for artifact publishing
   displayName: 'Publish Build Artifacts'
@@ -45,13 +53,19 @@ steps:
     echo "Debugging Artifact Staging Directory..."
     echo "Listing contents of $(Build.ArtifactStagingDirectory):"
     ls -la $(Build.ArtifactStagingDirectory)
-  displayName: 'Verify Artifact Staging Directory'
+  displayName: 'Verify Artifact Publishing Directory'
 
 - task: AzureWebApp@1  # Deploy to Azure Web App using service connection
   inputs:
     azureSubscription: 'java-service-connection'  # Service connection name
-    appName: $(appName)                           # Name of the Azure Web App
-    package: '$(Build.ArtifactStagingDirectory)/java-artifact.jar'
+    appName: $(appName)                              # Name of the Azure Web App
+    # IMPORTANT: Adjust the package path based on how the artifact was published.
+    # If you published the .jar file directly under 'java-artifact':
+    package: '$(Build.ArtifactStagingDirectory)/java-artifact/*.jar'
+    # If you published a directory containing the .jar file:
+    # package: '$(Build.ArtifactStagingDirectory)/java-artifact/your-app.jar'
+    # (Replace 'your-app.jar' with the actual name of your .jar file)
+    # If you are deploying a .war file, ensure the extension matches.
   timeoutInMinutes: 120  # Ensure deployment has sufficient time
   displayName: 'Deploy Java Application to Azure Web App'
 
