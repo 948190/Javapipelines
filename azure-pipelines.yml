@@ -20,7 +20,7 @@ steps:
     ls -la $(System.DefaultWorkingDirectory)
   displayName: 'Debug Workspace Contents'
 
-- task: Maven@3  # Build the Java application with Maven
+- task: Maven@3  # Use Maven to build your Java application
   inputs:
     mavenPomFile: 'pom.xml'  # Ensure this points to the correct location of pom.xml
     goals: 'clean package'
@@ -29,13 +29,14 @@ steps:
   displayName: 'Build Java Application with Maven'
 
 - script: |
-    echo "Listing target folder contents..."
+    echo "Debugging Build Output..."
+    echo "Listing contents of the target folder after Maven build:"
     ls -la $(System.DefaultWorkingDirectory)/target
-  displayName: 'Verify Build Output in Target Directory'
+  displayName: 'Verify Target Directory After Build'
 
 - task: PublishBuildArtifacts@1  # Publish the built artifact (e.g., .jar file)
   inputs:
-    pathToPublish: '$(System.DefaultWorkingDirectory)/target/*.jar'
+    pathToPublish: '$(System.DefaultWorkingDirectory)/target/*.jar'  # Path to the .jar file
     artifactName: 'java-artifact'
   timeoutInMinutes: 60  # Allocate appropriate time for artifact publishing
   displayName: 'Publish Build Artifacts'
@@ -44,7 +45,7 @@ steps:
     echo "Debugging Artifact Staging Directory..."
     echo "Listing contents of $(Build.ArtifactStagingDirectory):"
     ls -la $(Build.ArtifactStagingDirectory)
-  displayName: 'Verify Artifact Publishing Directory'
+  displayName: 'Verify Artifact Staging Directory'
 
 - task: AzureWebApp@1  # Deploy to Azure Web App using service connection
   inputs:
