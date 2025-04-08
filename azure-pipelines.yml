@@ -9,9 +9,18 @@ pool:
 variables:
   buildConfiguration: 'Release'  # Specify build configuration
   appName: 'MyJavaApp'           # Application name
+  system.debug: true             # Enable debug mode for detailed logs
+
+timeoutInMinutes: 120  # Increase timeout to prevent premature job termination
 
 steps:
 - checkout: self  # Ensure the repository is checked out
+
+- script: |
+    echo "Debugging Workspace..."
+    echo "Listing contents of $(System.DefaultWorkingDirectory):"
+    ls -la $(System.DefaultWorkingDirectory)
+  displayName: 'Debug Workspace Contents'
 
 - task: Maven@3  # Use Maven to build your Java application
   inputs:
@@ -19,10 +28,21 @@ steps:
     goals: 'clean package'
     options: '-DskipTests'  # Optional: Skip tests during the build if needed
 
+- script: |
+    echo "Listing target folder contents..."
+    ls -la $(System.DefaultWorkingDirectory)/target
+  displayName: 'Verify Build Output'
+
 - task: PublishBuildArtifacts@1  # Publish the built artifact (e.g., .jar file)
   inputs:
     pathToPublish: '$(System.DefaultWorkingDirectory)/target/*.jar'
     artifactName: 'java-artifact'
+
+- script: |
+    echo "Debugging Artifact Staging Directory..."
+    echo "Listing contents of $(Build.ArtifactStagingDirectory):"
+    ls -la $(Build.ArtifactStagingDirectory)
+  displayName: 'Verify Artifact Publishing'
 
 - task: AzureWebApp@1  # Deploy to Azure Web App using service connection
   inputs:
