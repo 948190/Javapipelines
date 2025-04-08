@@ -7,12 +7,14 @@ pool:
   vmImage: 'ubuntu-latest'  # Use Ubuntu as the build agent
 
 variables:
-  NODE_VERSION: '16.x'  # Regular variable for Node.js version
+  NODE_VERSION: '16.x'  # Node.js version
+  appName: 'MyJavaApp'  # Application name
 
 steps:
-- task: UseNode@2  # Install Node.js
+- task: NodeTool@0  # Correct task for setting up Node.js
   inputs:
-    version: '$(NODE_VERSION)'
+    versionSpec: '$(NODE_VERSION)'  # Using the variable for Node.js version
+    checkLatest: true
 
 - script: |
     echo "Installing dependencies..."
@@ -35,13 +37,13 @@ steps:
     pathToPublish: '$(Build.ArtifactStagingDirectory)'
     artifactName: 'drop'
 
-- task: AzureWebApp@1
+- task: AzureWebApp@1  # Deploy using the service connection
   inputs:
-    azureSubscription: 'java-service-connection'  # Name of the service connection
-    appName: 'MyJavaApp'
+    azureSubscription: 'java-service-connection'  # Service connection name
+    appName: $(appName)
     package: '$(Build.ArtifactStagingDirectory)/java-app.jar'
 
 - script: |
     echo "Deploying application..."
-    # Insert deployment script or commands here
+    # Deployment logic can go here
   displayName: 'Deploy Application'
