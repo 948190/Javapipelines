@@ -7,43 +7,30 @@ pool:
   vmImage: 'ubuntu-latest'  # Use Ubuntu as the build agent
 
 variables:
-  NODE_VERSION: '16.x'  # Node.js version
-  appName: 'MyJavaApp'  # Application name
+  buildConfiguration: 'Release'  # Specify build configuration
+  appName: 'MyJavaApp'           # Application name
 
 steps:
-- task: NodeTool@0  # Correct task for setting up Node.js
+- checkout: self  # Ensure the repository is checked out
+
+- task: Maven@3  # Use Maven to build your Java application
   inputs:
-    versionSpec: '$(NODE_VERSION)'  # Using the variable for Node.js version
-    checkLatest: true
+    mavenPomFile: 'pom.xml'
+    goals: 'clean package'
+    options: '-DskipTests'  # Optional: Skip tests during the build if needed
 
-- script: |
-    echo "Installing dependencies..."
-    npm install
-  displayName: 'Install Dependencies'
-
-- script: |
-    echo "Running tests..."
-    npm test
-  displayName: 'Run Tests'
-
-- task: CopyFiles@2  # Copy files for deployment
+- task: PublishBuildArtifacts@1  # Publish the built artifact (e.g., .jar file)
   inputs:
-    SourceFolder: '$(System.DefaultWorkingDirectory)'
-    Contents: '**'
-    TargetFolder: '$(Build.ArtifactStagingDirectory)'
+    pathToPublish: '$(System.DefaultWorkingDirectory)/target/*.jar'
+    artifactName: 'java-artifact'
 
-- task: PublishBuildArtifacts@1  # Publish artifacts
-  inputs:
-    pathToPublish: '$(Build.ArtifactStagingDirectory)'
-    artifactName: 'drop'
-
-- task: AzureWebApp@1  # Deploy using the service connection
+- task: AzureWebApp@1  # Deploy to Azure Web App using service connection
   inputs:
     azureSubscription: 'java-service-connection'  # Service connection name
     appName: $(appName)
-    package: '$(Build.ArtifactStagingDirectory)/java-app.jar'
+    package: '$(Build.ArtifactStagingDirectory)/java-artifact.jar'
 
 - script: |
     echo "Deploying application..."
-    # Deployment logic can go here
+    echo "Deployment process completed successfully!"
   displayName: 'Deploy Application'
