@@ -11,8 +11,6 @@ variables:
   appName: 'MyJavaApp'           # Application name
   system.debug: true             # Enable debug mode for detailed logs
 
-timeoutInMinutes: 120  # Increase timeout to prevent premature job termination
-
 steps:
 - checkout: self  # Ensure the repository is checked out
 
@@ -27,6 +25,7 @@ steps:
     mavenPomFile: 'pom.xml'
     goals: 'clean package'
     options: '-DskipTests'  # Optional: Skip tests during the build if needed
+  timeoutInMinutes: 120  # Specify timeout for this task
 
 - script: |
     echo "Listing target folder contents..."
@@ -37,6 +36,7 @@ steps:
   inputs:
     pathToPublish: '$(System.DefaultWorkingDirectory)/target/*.jar'
     artifactName: 'java-artifact'
+  timeoutInMinutes: 120  # Specify timeout for this task
 
 - script: |
     echo "Debugging Artifact Staging Directory..."
@@ -49,6 +49,7 @@ steps:
     azureSubscription: 'java-service-connection'  # Service connection name
     appName: $(appName)
     package: '$(Build.ArtifactStagingDirectory)/java-artifact.jar'
+  timeoutInMinutes: 120  # Specify timeout for this task
 
 - script: |
     echo "Deploying application..."
