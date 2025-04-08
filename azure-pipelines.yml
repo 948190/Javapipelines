@@ -20,38 +20,40 @@ steps:
     ls -la $(System.DefaultWorkingDirectory)
   displayName: 'Debug Workspace Contents'
 
-- task: Maven@3  # Use Maven to build your Java application
+- task: Maven@3  # Build the Java application with Maven
   inputs:
-    mavenPomFile: 'pom.xml'
+    mavenPomFile: 'pom.xml'  # Ensure this points to the correct location of pom.xml
     goals: 'clean package'
-    options: '-DskipTests'  # Optional: Skip tests during the build if needed
-  timeoutInMinutes: 120  # Specify timeout for this task
+    options: '-DskipTests'  # Optional: Skip tests during the build process
+  timeoutInMinutes: 120  # Ensure this step has sufficient time to complete
+  displayName: 'Build Java Application with Maven'
 
 - script: |
     echo "Listing target folder contents..."
     ls -la $(System.DefaultWorkingDirectory)/target
-  displayName: 'Verify Build Output'
+  displayName: 'Verify Build Output in Target Directory'
 
 - task: PublishBuildArtifacts@1  # Publish the built artifact (e.g., .jar file)
   inputs:
     pathToPublish: '$(System.DefaultWorkingDirectory)/target/*.jar'
     artifactName: 'java-artifact'
-  timeoutInMinutes: 120  # Specify timeout for this task
+  timeoutInMinutes: 60  # Allocate appropriate time for artifact publishing
+  displayName: 'Publish Build Artifacts'
 
 - script: |
     echo "Debugging Artifact Staging Directory..."
     echo "Listing contents of $(Build.ArtifactStagingDirectory):"
     ls -la $(Build.ArtifactStagingDirectory)
-  displayName: 'Verify Artifact Publishing'
+  displayName: 'Verify Artifact Publishing Directory'
 
 - task: AzureWebApp@1  # Deploy to Azure Web App using service connection
   inputs:
     azureSubscription: 'java-service-connection'  # Service connection name
-    appName: $(appName)
+    appName: $(appName)                           # Name of the Azure Web App
     package: '$(Build.ArtifactStagingDirectory)/java-artifact.jar'
-  timeoutInMinutes: 120  # Specify timeout for this task
+  timeoutInMinutes: 120  # Ensure deployment has sufficient time
+  displayName: 'Deploy Java Application to Azure Web App'
 
 - script: |
-    echo "Deploying application..."
     echo "Deployment process completed successfully!"
-  displayName: 'Deploy Application'
+  displayName: 'Finalize Deployment Process'
